@@ -39,6 +39,7 @@ class Traeger:
 
         # Setup some mqtt bits
         self.mqtt_client = mqtt.Client(transport = "websockets")
+        self.mqtt_client.tls_set()
         self.mqtt_client.on_connect = self.mqtt_on_connect
         self.mqtt_client.on_message = self.mqtt_on_message
         self.mqtt_client.on_disconnect = self.mqtt_on_disconnect
@@ -77,14 +78,13 @@ class Traeger:
             self.things[grill_id] = json.loads(message.payload)
             self.treagerdata[grill_id] = from_dict(data_class = TreagerData, data = json.loads(message.payload))
 
-        if message.topic in self.callbacks:
+        if self.callbacks[message.topic]:
             for callback in self.callbacks[message.topic]:
                 callback(client, userdata, message)
 
     def mqtt_on_disconnect(self, client, userdata, rc):
-        if time() >= self.mqtt_url_expires:
-            self.get_mqtt_url()
         logger.info("MQTT Disconnected")
+        self.mqtt_connect()
 
     def get_mqtt_url(self):
         if time() >= self.access_token_expires:
@@ -108,7 +108,6 @@ class Traeger:
             "Host": "{0:s}".format(mqtt_parts.netloc),
         }
         self.mqtt_client.ws_set_options(path="{}?{}".format(mqtt_parts.path, mqtt_parts.query), headers=headers)
-        self.mqtt_client.tls_set()
         self.mqtt_client.connect(mqtt_parts.netloc, 443)
         self.mqtt_client.loop_start()
 
