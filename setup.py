@@ -9,7 +9,7 @@ setup(
     scripts=['bin/traeger-wifire'],
     install_requires=[
         'paho-mqtt==1.6.1',
-        'boto3==1.24.2',
+        'boto3==1.24.6',
         'dacite==1.6.0',
     ]
 )
